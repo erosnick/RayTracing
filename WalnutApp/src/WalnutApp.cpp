@@ -33,7 +33,7 @@ public:
 		{
 			ImGui::Image(image->GetDescriptorSet(),
 				{ static_cast<float>(image->GetWidth()),
-					   static_cast<float>(image->GetHeight()) });
+					   static_cast<float>(image->GetHeight()) }, { 0, 1 }, {1, 0} );
 		}
 
 		ImGui::End();
