@@ -2,18 +2,19 @@
 #include "Walnut/Random.h"
 #include "Utils.h"
 
-void Renderer::Render()
+void Renderer::Render(const Camera& camera)
 {
+	Ray ray;
+	ray.origin = camera.GetPosition();
+
 	for (uint32_t y = 0; y < finalImage->GetHeight(); y++)
 	{
 		for (uint32_t x = 0; x < finalImage->GetWidth(); x++)
 		{
-			glm::vec2 coord = { x / static_cast<float>(finalImage->GetWidth()), y / static_cast<float>(finalImage->GetHeight()) };
-			coord = coord * 2.0f - 1.0f;
+			auto rayDirection = camera.GetRayDirections()[y * finalImage->GetWidth() + x];
+			ray.direction = rayDirection;
 
-			coord.x *= aspect;
-
-			auto color = PerPixel(coord);
+			auto color = TraceRay(ray);
 
 		    imageData[y * finalImage->GetWidth() + x] = Utils::convertToRGBA(color);
 		}
@@ -48,13 +49,10 @@ void Renderer::ResizeImageData(uint32_t width, uint32_t height)
 	imageData = new uint32_t[width * height];
 }
 
-glm::vec4 Renderer::PerPixel(const glm::vec2& coord)
+glm::vec4 Renderer::TraceRay(const Ray& ray)
 {
-	glm::vec3 center{ 0.0f, 0.0f, -1.0f };
-	
-	glm::vec3 rayOrigin{ 0.0f, 0.0f, 0.0f };
+	glm::vec3 center{ 0.0f, 0.0f, 0.0f };
 
-	glm::vec3 rayDirection(coord.x, coord.y, -1.0f);
 	//rayDirection = glm::normalize(rayDirection);
 
 	float radius = 0.5f;
@@ -64,9 +62,9 @@ glm::vec4 Renderer::PerPixel(const glm::vec2& coord)
 	// b = ray direction
 	// r = radius
 	// t = hit distance
-	auto oc = rayOrigin - center;
-	auto a = glm::dot(rayDirection, rayDirection);
-	auto b = 2.0f * glm::dot(oc, rayDirection);
+	auto oc = ray.origin - center;
+	auto a = glm::dot(ray.direction, ray.direction);
+	auto b = 2.0f * glm::dot(oc, ray.direction);
 	auto c = glm::dot(oc, oc) - radius * radius;
 
 	// Quadratic formula discriminant
@@ -75,7 +73,7 @@ glm::vec4 Renderer::PerPixel(const glm::vec2& coord)
 	
 	if (discriminant < 0.0f)
 	{
-		auto alpha = 0.5f * (rayDirection.y + 1.0f);
+		auto alpha = 0.5f * (ray.direction.y + 1.0f);
 		auto color = (1.0f - alpha) * glm::vec3(1.0f, 1.0f, 1.0f) + alpha * glm::vec3(0.5f, 0.7f, 1.0f);
 
 		return glm::vec4(color, 1.0f);
@@ -87,8 +85,8 @@ glm::vec4 Renderer::PerPixel(const glm::vec2& coord)
 	float t0 = (-b - discriminantSqrt) / (2.0f * a);
 	float t1 = (-b + discriminantSqrt) / (2.0f * a);
 
-	auto hitPosition0 = rayOrigin + rayDirection * t0;
-	auto hitPosition1 = rayOrigin + rayDirection * t1;
+	auto hitPosition0 = ray.origin + ray.direction * t0;
+	auto hitPosition1 = ray.origin + ray.direction * t1;
 
 	auto normal = glm::normalize(hitPosition0 - center);
 
@@ -96,10 +94,10 @@ glm::vec4 Renderer::PerPixel(const glm::vec2& coord)
 
 	color = glm::clamp(color, glm::vec3(0.0f), glm::vec3(1.0f));
 
-	auto lightDirection = glm::normalize(glm::vec3(-1.0f));
+	lightDirection = glm::normalize(lightDirection);
 
 	auto diffuse = glm::max(0.0f, glm::dot(normal, -lightDirection));
 
 	//return glm::vec4(color, 1.0f);
-	return glm::vec4(glm::vec3(diffuse), 1.0f);
+	return glm::vec4(objectColor * diffuse, 1.0f);
 }
