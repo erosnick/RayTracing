@@ -13,7 +13,9 @@ void Renderer::Render()
 
 			coord.x *= aspect;
 
-		    imageData[y * finalImage->GetWidth() + x] = PerPixel(coord);
+			auto color = PerPixel(coord);
+
+		    imageData[y * finalImage->GetWidth() + x] = Utils::convertToRGBA(color);
 		}
 	}
 
@@ -46,14 +48,14 @@ void Renderer::ResizeImageData(uint32_t width, uint32_t height)
 	imageData = new uint32_t[width * height];
 }
 
-uint32_t Renderer::PerPixel(const glm::vec2& coord)
+glm::vec4 Renderer::PerPixel(const glm::vec2& coord)
 {
 	glm::vec3 center{ 0.0f, 0.0f, -1.0f };
 	
 	glm::vec3 rayOrigin{ 0.0f, 0.0f, 0.0f };
 
 	glm::vec3 rayDirection(coord.x, coord.y, -1.0f);
-	rayDirection = glm::normalize(rayDirection);
+	//rayDirection = glm::normalize(rayDirection);
 
 	float radius = 0.5f;
 
@@ -69,7 +71,6 @@ uint32_t Renderer::PerPixel(const glm::vec2& coord)
 
 	// Quadratic formula discriminant
 	// b^2 - 4ac;
-
 	float discriminant = b * b - 4.0f * a * c;
 	
 	if (discriminant < 0.0f)
@@ -77,18 +78,28 @@ uint32_t Renderer::PerPixel(const glm::vec2& coord)
 		auto alpha = 0.5f * (rayDirection.y + 1.0f);
 		auto color = (1.0f - alpha) * glm::vec3(1.0f, 1.0f, 1.0f) + alpha * glm::vec3(0.5f, 0.7f, 1.0f);
 
-		return convertColor(color);
+		return glm::vec4(color, 1.0f);
 	}
 
 	float discriminantSqrt = std::sqrtf(discriminant);
 
-	float t = (-b - discriminantSqrt) / (2.0f * a);;
+	// (-b +- sqrt(discriminant)) / 2a
+	float t0 = (-b - discriminantSqrt) / (2.0f * a);
+	float t1 = (-b + discriminantSqrt) / (2.0f * a);
 
-	auto hitPosition = rayOrigin + rayDirection * t;
+	auto hitPosition0 = rayOrigin + rayDirection * t0;
+	auto hitPosition1 = rayOrigin + rayDirection * t1;
 
-	auto normal = glm::normalize(hitPosition - center);
+	auto normal = glm::normalize(hitPosition0 - center);
 
-	auto color = 0.5f * glm::vec3(normal.x + 1.0f, normal.y + 1.0f, normal.z + 1.0f);
+	auto color = normal * 0.5f + 0.5f;
 
-	return convertColor(color);
+	color = glm::clamp(color, glm::vec3(0.0f), glm::vec3(1.0f));
+
+	auto lightDirection = glm::normalize(glm::vec3(-1.0f));
+
+	auto diffuse = glm::max(0.0f, glm::dot(normal, -lightDirection));
+
+	//return glm::vec4(color, 1.0f);
+	return glm::vec4(glm::vec3(diffuse), 1.0f);
 }
