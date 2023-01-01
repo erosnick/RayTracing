@@ -4,12 +4,9 @@
 
 Renderer::Renderer()
 {
-	spheres.emplace_back(std::make_shared<Sphere>(glm::vec3(-0.5f, 0.0f, 0.0f), 0.5f, Material{ {1.0f, 0.0f, 0.0f} }));
-	spheres.emplace_back(std::make_shared<Sphere>(glm::vec3(0.25f, 0.0f, 0.0f), 0.25f, Material{ {0.0f, 0.0f, 1.0f} }));
-	spheres.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0f, -100.5f, 0.0f), 100.0f, Material{ {0.5f, 1.0f, 0.5f} }));
 }
 
-void Renderer::Render(const Camera& camera)
+void Renderer::Render(const Scene& scene, const Camera& camera)
 {
 	Ray ray;
 	ray.origin = camera.GetPosition();
@@ -21,7 +18,7 @@ void Renderer::Render(const Camera& camera)
 			auto rayDirection = camera.GetRayDirections()[y * finalImage->GetWidth() + x];
 			ray.direction = rayDirection;
 
-			auto color = TraceRay(ray);
+			auto color = TraceRay(scene, ray);
 
 		    imageData[y * finalImage->GetWidth() + x] = Utils::convertToRGBA(color);
 		}
@@ -56,13 +53,13 @@ void Renderer::ResizeImageData(uint32_t width, uint32_t height)
 	imageData = new uint32_t[width * height];
 }
 
-glm::vec4 Renderer::TraceRay(const Ray& ray)
+glm::vec4 Renderer::TraceRay(const Scene& scene, const Ray& ray)
 {
 	Intersection intersection;
 	bool hit = false;
 	float closestSoFar = std::numeric_limits<float>::max();
 
-	for (const auto& sphere : spheres)
+	for (const auto& sphere : scene.getSpheres())
 	{
 		if (sphere->intersect(ray, 0.001f, closestSoFar, intersection))
 		{

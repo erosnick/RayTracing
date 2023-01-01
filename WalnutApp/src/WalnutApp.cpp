@@ -8,6 +8,10 @@
 
 #include "Camera.h"
 #include "Renderer.h"
+#include "Scene.h"
+#include "Sphere.h"
+
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace Walnut;
 
@@ -35,11 +39,34 @@ public:
 	{
 		ImGui::Begin("Settings");
 		ImGui::Text("Last render time: %.3fms", lastRenderTime);
+
 		if (ImGui::Button("Render"))
 		{
 			Render();
 		}
-		ImGui::ColorEdit3("Object Color", &renderer.objectColor[0]);
+
+		ImGui::End();
+
+		ImGui::Begin("Scene");
+
+		for (auto i = 0; i < scene.getSpheres().size(); i++)
+		{
+			// Give this control block a unique id (otherwise ImGui don't know how to distinguish multiple controls with the same name)
+			ImGui::PushID(i);
+			
+			auto& sphere = scene.getSpheres()[i];
+
+			ImGui::LabelText("", "Sphere%d", i);
+
+			ImGui::DragFloat3("Sphere Position", glm::value_ptr(sphere->center), 0.1f);
+			ImGui::DragFloat("Sphere Radius", &sphere->radius, 0.01f, 0.1f, 1.0f);
+			ImGui::ColorEdit3("Sphere Color", glm::value_ptr(sphere->material.albedo));
+
+			ImGui::Separator();
+
+			ImGui::PopID();
+		}
+
 		ImGui::SliderFloat3("Light Direction", &renderer.lightDirection[0], -1.0f, 1.0f);
 		ImGui::End();
 
@@ -70,12 +97,13 @@ public:
 
 		renderer.OnResize(viewportWidth, viewportHeight);
 		camera.OnResize(viewportWidth, viewportHeight);
-		renderer.Render(camera);
+		renderer.Render(scene, camera);
 
 		lastRenderTime = timer.ElapsedMillis();
 	}
 
 private:
+	Scene scene;
 	Camera camera;
 	Renderer renderer;
 	uint32_t viewportWidth = 0;
