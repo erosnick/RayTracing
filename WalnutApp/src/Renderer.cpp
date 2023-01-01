@@ -2,6 +2,13 @@
 #include "Walnut/Random.h"
 #include "Utils.h"
 
+Renderer::Renderer()
+{
+	spheres.emplace_back(std::make_shared<Sphere>(glm::vec3(-0.5f, 0.0f, 0.0f), 0.5f, Material{ {1.0f, 0.0f, 0.0f} }));
+	spheres.emplace_back(std::make_shared<Sphere>(glm::vec3(0.25f, 0.0f, 0.0f), 0.25f, Material{ {0.0f, 0.0f, 1.0f} }));
+	spheres.emplace_back(std::make_shared<Sphere>(glm::vec3(0.0f, -100.5f, 0.0f), 100.0f, Material{ {0.5f, 1.0f, 0.5f} }));
+}
+
 void Renderer::Render(const Camera& camera)
 {
 	Ray ray;
@@ -51,27 +58,20 @@ void Renderer::ResizeImageData(uint32_t width, uint32_t height)
 
 glm::vec4 Renderer::TraceRay(const Ray& ray)
 {
-	glm::vec3 center{ 0.0f, 0.0f, 0.0f };
+	Intersection intersection;
+	bool hit = false;
+	float closestSoFar = std::numeric_limits<float>::max();
 
-	//rayDirection = glm::normalize(rayDirection);
-
-	float radius = 0.5f;
-
-	// (bx^2 + by^2)t^2 + 2(axbx + ayby)t + (ax^2 + ay^2 - r^2) = 0
-	// a = ray origin
-	// b = ray direction
-	// r = radius
-	// t = hit distance
-	auto oc = ray.origin - center;
-	auto a = glm::dot(ray.direction, ray.direction);
-	auto b = 2.0f * glm::dot(oc, ray.direction);
-	auto c = glm::dot(oc, oc) - radius * radius;
-
-	// Quadratic formula discriminant
-	// b^2 - 4ac;
-	float discriminant = b * b - 4.0f * a * c;
+	for (const auto& sphere : spheres)
+	{
+		if (sphere->intersect(ray, 0.001f, closestSoFar, intersection))
+		{
+			hit = true;
+			closestSoFar = intersection.t;
+		}
+	}
 	
-	if (discriminant < 0.0f)
+	if (!hit)
 	{
 		auto alpha = 0.5f * (ray.direction.y + 1.0f);
 		auto color = (1.0f - alpha) * glm::vec3(1.0f, 1.0f, 1.0f) + alpha * glm::vec3(0.5f, 0.7f, 1.0f);
@@ -79,25 +79,14 @@ glm::vec4 Renderer::TraceRay(const Ray& ray)
 		return glm::vec4(color, 1.0f);
 	}
 
-	float discriminantSqrt = std::sqrtf(discriminant);
-
-	// (-b +- sqrt(discriminant)) / 2a
-	float t0 = (-b - discriminantSqrt) / (2.0f * a);
-	float t1 = (-b + discriminantSqrt) / (2.0f * a);
-
-	auto hitPosition0 = ray.origin + ray.direction * t0;
-	auto hitPosition1 = ray.origin + ray.direction * t1;
-
-	auto normal = glm::normalize(hitPosition0 - center);
-
-	auto color = normal * 0.5f + 0.5f;
+	auto color = intersection.normal * 0.5f + 0.5f;
 
 	color = glm::clamp(color, glm::vec3(0.0f), glm::vec3(1.0f));
 
 	lightDirection = glm::normalize(lightDirection);
 
-	auto diffuse = glm::max(0.0f, glm::dot(normal, -lightDirection));
+	auto diffuse = glm::max(0.0f, glm::dot(intersection.normal, -lightDirection));
 
 	//return glm::vec4(color, 1.0f);
-	return glm::vec4(objectColor * diffuse, 1.0f);
+	return glm::vec4(intersection.material.albedo * diffuse, 1.0f);
 }

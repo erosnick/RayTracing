@@ -4,10 +4,14 @@
 #include "Walnut/Image.h"
 #include "Walnut/Random.h"
 #include "Walnut/Timer.h"
-#include "Renderer.h"
+#include "Walnut/Input/Input.h"
+
 #include "Camera.h"
+#include "Renderer.h"
 
 using namespace Walnut;
+
+Walnut::Application* mainApp = nullptr;
 
 class ExampleLayer : public Walnut::Layer
 {
@@ -20,6 +24,11 @@ public:
 	virtual void OnUpdate(float ts) override
 	{
 		camera.OnUpdate(ts);
+
+		if (Input::IsKeyDown(KeyCode::Escape))
+		{
+			mainApp->Close();
+		}
 	}
 
 	virtual void OnUIRender() override
@@ -80,6 +89,7 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 	spec.Name = "Walnut Example";
 
 	Walnut::Application* app = new Walnut::Application(spec);
+	mainApp = app;
 	app->PushLayer<ExampleLayer>();
 	app->SetMenubarCallback([app]()
 	{

@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Walnut/Image.h"
-#include "Camera.h"
 #include "Ray.h"
+#include "Sphere.h"
+#include "Camera.h"
+#include "Walnut/Image.h"
 
 #include <memory>
 
@@ -14,7 +15,7 @@ class Renderer
 {
 public:
 
-	Renderer() = default;
+	Renderer();
 
 	void Render(const Camera& camera);
 
@@ -31,4 +32,6 @@ private:
 	std::shared_ptr<Image> finalImage = nullptr;
 	uint32_t* imageData = nullptr;
 	float aspect = 1.0f;
+
+	std::vector<std::shared_ptr<Sphere>> spheres;
 };
