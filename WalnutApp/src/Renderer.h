@@ -26,6 +26,8 @@ public:
 
 public:
 	glm::vec3 lightDirection{ -1.0f };
+	const Scene* activeScene = nullptr;
+	const Camera* activeCamera = nullptr;
 private:
 	void ResizeImageData(uint32_t width, uint32_t height);
 	inline glm::vec4 TraceRay(const Scene& scene, const Ray& ray);

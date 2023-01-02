@@ -8,6 +8,9 @@ Renderer::Renderer()
 
 void Renderer::Render(const Scene& scene, const Camera& camera)
 {
+	activeScene = &scene;
+	activeCamera = &camera;
+
 	Ray ray;
 	ray.origin = camera.GetPosition();
 
