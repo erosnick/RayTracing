@@ -18,7 +18,7 @@ bool Sphere::intersect(const Ray& ray, float tMin, float tMax, Intersection& int
 
 	if (discriminant < 0.0f)
 	{
-		intersection.t = -1.0f;
+		intersection.hitDistance = -1.0f;
 
 		return false;
 	}
@@ -32,7 +32,7 @@ bool Sphere::intersect(const Ray& ray, float tMin, float tMax, Intersection& int
 		root = (-b + discriminantSqrt) / (2.0f * a);
 		if (root < tMin || tMax < root)
 		{
-			intersection.t = -1.0f;
+			intersection.hitDistance = -1.0f;
 			return false;
 		}
 	}
@@ -48,9 +48,9 @@ bool Sphere::intersect(const Ray& ray, float tMin, float tMax, Intersection& int
 
 	auto color = normal * 0.5f + 0.5f;
 
-	intersection.t = root;
+	intersection.hitDistance = root;
 	intersection.normal = normal;
-	intersection.position = ray.origin + ray.direction * intersection.t;
+	intersection.position = ray.origin + ray.direction * intersection.hitDistance;
 	intersection.material = material;
 
 	return true;

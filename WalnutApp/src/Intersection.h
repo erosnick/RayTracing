@@ -6,8 +6,9 @@
 
 struct Intersection
 {
-	float t;
+	float hitDistance;
 	glm::vec3 position;
 	glm::vec3 normal;
 	Material material;
+	uint32_t objectIndex;
 };
