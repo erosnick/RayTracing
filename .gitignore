@@ -9,6 +9,7 @@ bin-int/
 *.vcxproj.filters
 *.sln
 *.obj
+*.ilk
 
 # Exclude
 !vendor/bin
