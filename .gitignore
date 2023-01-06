@@ -10,6 +10,7 @@ bin-int/
 *.sln
 *.obj
 *.ilk
+*.pdb
 
 # Exclude
 !vendor/bin
