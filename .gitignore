@@ -11,6 +11,7 @@ bin-int/
 *.obj
 *.ilk
 *.pdb
+*.log
 
 # Exclude
 !vendor/bin
