@@ -33,13 +33,13 @@ public:
 private:
 	void ResizeImageData(uint32_t width, uint32_t height);
 
-	glm::vec4 PerPixel(uint32_t x, uint32_t y); // RayGen
+	glm::vec4 PerPixel(uint32_t x, uint32_t y); // RayGen shader
 	
 	Intersection TraceRay(const Ray& ray);
 
 	Intersection ClosestHit(const Ray& ray, float hitDistance, uint32_t objectIndex);
 
-	Intersection Miss(const Ray& ray);
+	Intersection Miss(const Ray& ray); // Miss shader
 
 	inline glm::vec4 TraceRay(const Scene& scene, const Ray& ray);
 private:
