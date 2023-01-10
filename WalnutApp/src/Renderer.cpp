@@ -21,7 +21,8 @@ void Renderer::Render(const Scene& scene, const Camera& camera)
 			auto rayDirection = camera.GetRayDirections()[y * finalImage->GetWidth() + x];
 			ray.direction = rayDirection;
 
-			auto color = TraceRay(scene, ray);
+			auto color = PerPixel(x, y);
+			//auto color = TraceRay(scene, ray);
 
 		    imageData[y * finalImage->GetWidth() + x] = Utils::convertToRGBA(color);
 		}
@@ -61,8 +62,47 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	Ray ray;
 	ray.origin = activeCamera->GetPosition();
 	auto rayDirection = activeCamera->GetRayDirections()[y * finalImage->GetWidth() + x];
+	ray.direction = rayDirection;
 
-	return glm::vec4(1.0f);
+	int32_t bounces = 2;
+	glm::vec3 finalColor = glm::vec3(0.0f);
+	float multiplier = 1.0f;
+
+	for (auto i = 0; i < bounces; i++)
+	{
+		auto intersection = TraceRay(ray);
+
+		if (intersection.hitDistance < 0.0f)
+		{
+			auto alpha = 0.5f * (ray.direction.y + 1.0f);
+			auto color = (1.0f - alpha) * glm::vec3(1.0f, 1.0f, 1.0f) + alpha * glm::vec3(0.5f, 0.7f, 1.0f);
+			
+			color = glm::vec3(0.0f);
+			finalColor += color * multiplier;
+			break;
+		}
+
+		auto color = intersection.normal * 0.5f + 0.5f;
+
+		color = glm::clamp(color, glm::vec3(0.0f), glm::vec3(1.0f));
+
+		lightDirection = glm::normalize(lightDirection);
+
+		auto diffuse = glm::max(0.0f, glm::dot(intersection.normal, -lightDirection));
+
+		const auto& sphere = activeScene->getSpheres()[intersection.objectIndex];
+
+		auto sphereColor = intersection.material.albedo * diffuse;
+		sphereColor = sphere->material.albedo * diffuse;
+
+		finalColor += sphereColor * multiplier;
+		multiplier *= 0.7f;
+
+		ray.origin = intersection.position + intersection.normal * 0.0001f;
+		ray.direction = glm::reflect(ray.direction, intersection.normal);
+	}
+
+	return glm::vec4(finalColor, 1.0f);
 }
 
 glm::vec4 Renderer::TraceRay(const Scene& scene, const Ray& ray)
@@ -122,9 +162,6 @@ Intersection Renderer::TraceRay(const Ray& ray)
 
 	if (!hit)
 	{
-		auto alpha = 0.5f * (ray.direction.y + 1.0f);
-		auto color = (1.0f - alpha) * glm::vec3(1.0f, 1.0f, 1.0f) + alpha * glm::vec3(0.5f, 0.7f, 1.0f);
-
 		return Miss(ray);
 	}
 
@@ -133,7 +170,16 @@ Intersection Renderer::TraceRay(const Ray& ray)
 
 Intersection Renderer::ClosestHit(const Ray& ray, float hitDistance, uint32_t objectIndex)
 {
+	auto sphere = activeScene->getSpheres()[objectIndex];
+
 	Intersection intersection;
+
+	intersection.hitDistance = hitDistance;
+	intersection.objectIndex = objectIndex;
+
+	intersection.position = ray.origin + ray.direction * hitDistance;
+	intersection.normal = glm::normalize(intersection.position - sphere->center);
+	intersection.material = sphere->material;
 
 	return intersection;
 }
