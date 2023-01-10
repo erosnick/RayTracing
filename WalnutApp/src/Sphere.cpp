@@ -51,7 +51,7 @@ bool Sphere::intersect(const Ray& ray, float tMin, float tMax, Intersection& int
 	intersection.hitDistance = root;
 	intersection.normal = normal;
 	intersection.position = ray.origin + ray.direction * intersection.hitDistance;
-	intersection.material = material;
+	intersection.materialIndex = materialIndex;
 
 	return true;
 }

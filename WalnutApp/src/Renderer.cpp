@@ -85,13 +85,15 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 
 		const auto& sphere = activeScene->getSpheres()[intersection.objectIndex];
 
-		auto sphereColor = sphere->material.albedo * diffuse;
+		auto material = activeScene->getMaterials()[intersection.materialIndex];
+
+		auto sphereColor = material.albedo * diffuse;
 
 		finalColor += sphereColor * multiplier;
 		multiplier *= 0.5f;
 
 		ray.origin = intersection.position + intersection.normal * 0.0001f;
-		ray.direction = glm::reflect(ray.direction, intersection.normal);
+		ray.direction = glm::reflect(ray.direction, intersection.normal + Random::Vec3(-0.5f, 0.5f) * material.roughness);
 	}
 
 	return glm::vec4(finalColor, 1.0f);
@@ -129,7 +131,8 @@ glm::vec4 Renderer::TraceRay(const Scene& scene, const Ray& ray)
 	auto diffuse = glm::max(0.0f, glm::dot(intersection.normal, -lightDirection));
 
 	//return glm::vec4(color, 1.0f);
-	return glm::vec4(intersection.material.albedo * diffuse, 1.0f);
+	auto material = activeScene->getMaterials()[intersection.materialIndex];
+	return glm::vec4(material.albedo * diffuse, 1.0f);
 }
 
 Intersection Renderer::TraceRay(const Ray& ray)
@@ -171,7 +174,7 @@ Intersection Renderer::ClosestHit(const Ray& ray, float hitDistance, uint32_t ob
 
 	intersection.position = ray.origin + ray.direction * hitDistance;
 	intersection.normal = glm::normalize(intersection.position - sphere->center);
-	intersection.material = sphere->material;
+	intersection.materialIndex = sphere->materialIndex;
 
 	return intersection;
 }

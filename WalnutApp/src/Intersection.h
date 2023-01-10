@@ -9,6 +9,6 @@ struct Intersection
 	float hitDistance;
 	glm::vec3 position;
 	glm::vec3 normal;
-	Material material;
+	int32_t materialIndex;
 	uint32_t objectIndex;
 };

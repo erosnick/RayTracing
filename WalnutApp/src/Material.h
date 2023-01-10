@@ -5,5 +5,6 @@
 struct Material
 {
 	glm::vec3 albedo{ 1.0f };
-	float reflective = 0.0f;
+	float roughness = 0.0f;
+	float metallic = 0.0f;
 };

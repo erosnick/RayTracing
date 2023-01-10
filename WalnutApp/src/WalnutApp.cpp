@@ -60,7 +60,23 @@ public:
 
 			ImGui::DragFloat3("Sphere Position", glm::value_ptr(sphere->center), 0.1f);
 			ImGui::DragFloat("Sphere Radius", &sphere->radius, 0.01f, 0.1f, 1.0f);
-			ImGui::ColorEdit3("Sphere Color", glm::value_ptr(sphere->material.albedo));
+			ImGui::DragInt("Material Index", &sphere->materialIndex, 0.1f, 0, scene.getMaterials().size() - 1);
+
+			ImGui::Separator();
+
+			ImGui::PopID();
+		}
+
+		ImGui::LabelText("", "Materials");
+
+		for (auto i = 0; i < scene.getMaterials().size(); i++)
+		{
+			ImGui::PushID(i);
+
+			auto& material = scene.getMaterials()[i];
+			ImGui::ColorEdit3("Sphere Color", glm::value_ptr(material.albedo));
+			ImGui::DragFloat("Roughness", &material.roughness, 0.01f, 0.0f, 1.0f);
+			ImGui::DragFloat("Metallic", &material.metallic, 0.01f, 0.0f, 1.0f);
 
 			ImGui::Separator();
 
