@@ -11,19 +11,13 @@ void Renderer::Render(const Scene& scene, const Camera& camera)
 	activeScene = &scene;
 	activeCamera = &camera;
 
-	Ray ray;
-	ray.origin = camera.GetPosition();
-
 	for (uint32_t y = 0; y < finalImage->GetHeight(); y++)
 	{
 		for (uint32_t x = 0; x < finalImage->GetWidth(); x++)
 		{
-			auto rayDirection = camera.GetRayDirections()[y * finalImage->GetWidth() + x];
-			ray.direction = rayDirection;
-
 			auto color = PerPixel(x, y);
 			//auto color = TraceRay(scene, ray);
-
+			color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
 		    imageData[y * finalImage->GetWidth() + x] = Utils::convertToRGBA(color);
 		}
 	}
@@ -77,7 +71,6 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 			auto alpha = 0.5f * (ray.direction.y + 1.0f);
 			auto color = (1.0f - alpha) * glm::vec3(1.0f, 1.0f, 1.0f) + alpha * glm::vec3(0.5f, 0.7f, 1.0f);
 			
-			color = glm::vec3(0.0f);
 			finalColor += color * multiplier;
 			break;
 		}
@@ -86,17 +79,16 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 
 		color = glm::clamp(color, glm::vec3(0.0f), glm::vec3(1.0f));
 
-		lightDirection = glm::normalize(lightDirection);
+		lightDirection = glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f));
 
-		auto diffuse = glm::max(0.0f, glm::dot(intersection.normal, -lightDirection));
+		auto diffuse = glm::max(glm::dot(intersection.normal, -lightDirection), 0.0f);
 
 		const auto& sphere = activeScene->getSpheres()[intersection.objectIndex];
 
-		auto sphereColor = intersection.material.albedo * diffuse;
-		sphereColor = sphere->material.albedo * diffuse;
+		auto sphereColor = sphere->material.albedo * diffuse;
 
 		finalColor += sphereColor * multiplier;
-		multiplier *= 0.7f;
+		multiplier *= 0.5f;
 
 		ray.origin = intersection.position + intersection.normal * 0.0001f;
 		ray.direction = glm::reflect(ray.direction, intersection.normal);
