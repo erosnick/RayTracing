@@ -27,7 +27,10 @@ public:
 
 	virtual void OnUpdate(float ts) override
 	{
-		camera.OnUpdate(ts);
+		if (camera.OnUpdate(ts))
+		{
+			renderer.resetFrameIndex();
+		}
 
 		if (Input::IsKeyDown(KeyCode::Escape))
 		{
@@ -43,6 +46,15 @@ public:
 		if (ImGui::Button("Render"))
 		{
 			Render();
+		}
+
+		ImGui::Checkbox("Accumulate", &renderer.getSettings().accumulate);
+
+		ImGui::LabelText("", "Frame Count:%d", renderer.getFrameIndex());
+
+		if (ImGui::Button("Reset"))
+		{
+			renderer.resetFrameIndex();
 		}
 
 		ImGui::End();
