@@ -2,6 +2,10 @@
 #include "Walnut/Random.h"
 #include "Utils.h"
 
+#include <thread>
+#include <execution>
+#include <omp.h>
+
 Renderer::Renderer()
 {
 }
@@ -16,21 +20,49 @@ void Renderer::Render(const Scene& scene, const Camera& camera)
 		memset(accumulationData, 0, finalImage->GetWidth() * finalImage->GetHeight() * sizeof(glm::vec4));
 	}
 
-	for (uint32_t y = 0; y < finalImage->GetHeight(); y++)
+	if (multithreading)
 	{
-		for (uint32_t x = 0; x < finalImage->GetWidth(); x++)
+		auto threads = std::thread::hardware_concurrency();
+
+		std::for_each(std::execution::par, imageVerticalIterator.begin(), imageVerticalIterator.end(),
+			[&](uint32_t y)
+			{
+				std::for_each(std::execution::par, imageHorizontalIterator.begin(), imageHorizontalIterator.end(),
+				[&, y](uint32_t x)
+					{
+						auto color = PerPixel(x, y);
+
+		accumulationData[y * finalImage->GetWidth() + x] += color;
+
+		auto accumulatedColor = accumulationData[y * finalImage->GetWidth() + x];
+
+		accumulatedColor /= static_cast<float>(frameIndex);
+
+		//auto color = TraceRay(scene, ray);
+		accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
+		imageData[y * finalImage->GetWidth() + x] = Utils::convertToRGBA(accumulatedColor);
+					});
+			});
+	}
+	else
+	{
+		#pragma omp parallel for
+		for (int32_t y = 0; y < static_cast<int32_t>(finalImage->GetHeight()); y++)
 		{
-			auto color = PerPixel(x, y);
+			for (int32_t x = 0; x < static_cast<int32_t>(finalImage->GetWidth()); x++)
+			{
+				auto color = PerPixel(x, y);
 
-			accumulationData[y * finalImage->GetWidth() + x] += color;
+				accumulationData[y * finalImage->GetWidth() + x] += color;
 
-			auto accumulatedColor = accumulationData[y * finalImage->GetWidth() + x];
+				auto accumulatedColor = accumulationData[y * finalImage->GetWidth() + x];
 
-			accumulatedColor /= static_cast<float>(frameIndex);
+				accumulatedColor /= static_cast<float>(frameIndex);
 
-			//auto color = TraceRay(scene, ray);
-			accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
-		    imageData[y * finalImage->GetWidth() + x] = Utils::convertToRGBA(accumulatedColor);
+				//auto color = TraceRay(scene, ray);
+				accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
+				imageData[y * finalImage->GetWidth() + x] = Utils::convertToRGBA(accumulatedColor);
+			}
 		}
 	}
 
@@ -64,6 +96,19 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	}
 
 	ResizeImageData(width, height);
+
+	imageHorizontalIterator.resize(width);
+	imageVerticalIterator.resize(height);
+
+	for (uint32_t i = 0; i < width; i++)
+	{
+		imageHorizontalIterator[i] = i;
+	}
+
+	for (uint32_t i = 0; i < height; i++)
+	{
+		imageVerticalIterator[i] = i;
+	}
 }
 
 void Renderer::ResizeImageData(uint32_t width, uint32_t height)

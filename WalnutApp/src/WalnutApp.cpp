@@ -57,6 +57,8 @@ public:
 			renderer.resetFrameIndex();
 		}
 
+		ImGui::Checkbox("Multithreading", &renderer.getMultithreading());
+
 		ImGui::End();
 
 		ImGui::Begin("Scene");

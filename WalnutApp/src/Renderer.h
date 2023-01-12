@@ -32,6 +32,7 @@ public:
 	auto GetFinadlImage() const { return finalImage; }
 	void resetFrameIndex() { frameIndex = 1; }
 	uint32_t getFrameIndex() const { return frameIndex; }
+	bool& getMultithreading() { return multithreading; }
 	Settings& getSettings() { return settings; }
 public:
 	glm::vec3 lightDirection{ -1.0f };
@@ -56,4 +57,7 @@ private:
 	uint32_t frameIndex = 1;
 	float aspect = 1.0f;
 	Settings settings;
+	std::vector<uint32_t> imageHorizontalIterator;
+	std::vector<uint32_t> imageVerticalIterator;
+	bool multithreading = false;
 };

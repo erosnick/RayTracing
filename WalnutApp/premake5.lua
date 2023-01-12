@@ -4,6 +4,7 @@ project "WalnutApp"
    cppdialect "C++17"
    targetdir "bin/%{cfg.buildcfg}"
    staticruntime "off"
+   openmp "On"
 
    files { "src/**.h", "src/**.cpp" }
 
